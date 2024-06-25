@@ -96,64 +96,72 @@
                 })
                 .catch((err) => {
                     console.error("Error accessing camera: ", err);
+               
                 });
-    
-            captureButton.addEventListener('click', () => {
-                const context = canvas.getContext('2d');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const imageData = canvas.toDataURL('image/png');
-                imageDataInput.value = imageData;
-                alert('Image captured successfully!');
-            });
-    
-            ImageCaptureForm.addEventListener('submit', (event) => {
-                event.preventDefault();
-                
-                if (!imageDataInput.value) {
-                    alert('Please capture a photo before submitting the form.');
-                    return;
-                }
-    
-                const formData = new FormData(ImageCaptureForm);
-                const now = new Date();
-                const formDetails = {
-                    FullName: formData.get('full_name'),
-                    EmailAddress: formData.get('email'),
-                    PhoneNumber: formData.get('phone'),
-                    Department: formData.get('options'),
-                    PurposeOfVisit: formData.get('position'),
-                    Date: formData.get('date'),
-                    Gender: formData.get('gender'),
-                    capturedImage: formData.get('imageData'),
-                    submittedAt: now.toLocaleString()
-                };
-                
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-    
-                doc.text(`Visitor Form Submission`, 10, 10);
-                doc.text(`Full Name: ${formDetails.FullName}`, 10, 20);
-                doc.text(`Email Address: ${formDetails.EmailAddress}`, 10, 30);
-                doc.text(`Phone Number: ${formDetails.PhoneNumber}`, 10, 40);
-                doc.text(`Department: ${formDetails.Department}`, 10, 50);
-                doc.text(`Purpose of Visit: ${formDetails.PurposeOfVisit}`, 10, 60);
-                doc.text(`Date: ${formDetails.Date}`, 10, 80);
-                doc.text(`Gender: ${formDetails.Gender}`, 10, 90);
-                doc.text(`Form Submitted At: ${formDetails.submittedAt}`, 10, 100);
-    
-                const img = new Image();
-                img.src = formDetails.capturedImage;
-                img.onload = function() {
-                    doc.addImage(img, 'PNG', 10, 110, 50, 50);
-                    doc.save('Visitor_Form_Submission.pdf');
-    
-                    
-                    window.location.href = 'confirmation.html';
-                };
-            });
-        });
-    </script>
+
+captureButton.addEventListener('click', () => {
+    const context = canvas.getContext('2d');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = canvas.toDataURL('image/png');
+    imageDataInput.value = imageData;
+    alert('Image captured successfully!');
+});
+
+ImageCaptureForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    if (!imageDataInput.value) {
+        alert('Please capture a photo before submitting the form.');
+        return;
+    }
+
+    // Retrieve form data from local storage
+    const formData = JSON.parse(localStorage.getItem('visitorFormData'));
+
+    const now = new Date();
+    const formDetails = {
+        FullName: formData.full_name,
+        EmailAddress: formData.email,
+        PhoneNumber: formData.phone,
+        Department: formData.options,
+        PurposeOfVisit: formData.position,
+        Date: formData.date,
+        Gender: formData.gender,
+        capturedImage: imageDataInput.value,
+        submittedAt: now.toLocaleString()
+    };
+
+    // Generate PDF using jsPDF library
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.text(`Visitor Form Submission`, 10, 10);
+    doc.text(`Full Name: ${formDetails.FullName}`, 10, 20);
+    doc.text(`Email Address: ${formDetails.EmailAddress}`, 10, 30);
+    doc.text(`Phone Number: ${formDetails.PhoneNumber}`, 10, 40);
+    doc.text(`Department: ${formDetails.Department}`, 10, 50);
+    doc.text(`Purpose of Visit: ${formDetails.PurposeOfVisit}`, 10, 60);
+    doc.text(`Date: ${formDetails.Date}`, 10, 80);
+    doc.text(`Gender: ${formDetails.Gender}`, 10, 90);
+    doc.text(`Form Submitted At: ${formDetails.submittedAt}`, 10, 100);
+
+    // Add the captured image to the PDF
+    const img = new Image();
+    img.src = formDetails.capturedImage;
+    img.onload = function() {
+        doc.addImage(img, 'PNG', 10, 110, 50, 50);
+        doc.save('Visitor_Form_Submission.pdf');
+
+        // Clean up local storage after submission
+        localStorage.removeItem('visitorFormData');
+
+        // Redirect to confirmation page
+        window.location.href = 'confirmation.html';
+    };
+});
+});
+</script>
 </body>
 </html>
