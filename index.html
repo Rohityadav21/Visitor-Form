@@ -32,7 +32,7 @@
             margin-top: 10px;
             color: #555;
         }
-        input[type="text"], input[type="email"], input[type="tel"], input[type="date"], textarea, select {
+        input[type="text"], input[type="email"], input[type="tel"], textarea, select {
             width: 100%;
             padding: 12px;
             margin: 8px 0 20px 0;
@@ -66,17 +66,22 @@
         .form-group {
             margin-bottom: 20px;
         }
-        .gender-options {
+        .id-proof-section {
             display: flex;
-            justify-content: space-between;
+            gap: 175px;
         }
-        .gender-options div {
-            flex: 1;
-            display: flex;
-            align-items: center;
+        .id-proof-section label {
+            margin-top: 0;
         }
-        .gender-options input {
-            margin-right: 10px;
+        .id-proof-section select,
+        .id-proof-section input {
+            width: calc(140% - 0px); /* subtract margin */
+            padding: 12px;
+            margin: 8px 0 20px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1em;
         }
     </style>
 </head>
@@ -98,9 +103,9 @@
                 <input type="tel" id="phone" name="phone" required>
             </div>
             <div class="form-group">
-                <label for="options">Department:</label>
-                <select id="options" name="options">
-                    <option>Select Department</option>
+                <label for="department">Department:</label>
+                <select id="department" name="department">
+                    <option value="">Select Department</option>
                     <option value="Marketing and Sales">Marketing and Sales</option>
                     <option value="Finance">Finance</option>
                     <option value="Human Resources">Human Resources</option>
@@ -109,33 +114,96 @@
             </div>
             <div class="form-group">
                 <label for="contact_person">Contact Person:</label>
-                <input type="text" id="contact_person" name="contact_person" required>
+                <select id="contact_person" name="contact_person" required>
+                    <option value="">Select Contact Person</option>
+                    <!-- Options will be dynamically added here -->
+                </select>
             </div>
             <div class="form-group">
                 <label for="position">Purpose of Visit:</label>
                 <input type="text" id="position" name="position" required>
             </div>
             <div class="form-group">
-                <label for="options">Gender:</label>
-                <select id="options" name="options">
-                    <option>Select Gender</option>
-                    <option value="Marketing and Sales">Male</option>
-                    <option value="Finance">Female</option>
-                    <option value="Human Resources">Others</option>
+                <div class="id-proof-section">
+                    <div>
+                        <label for="id_proof">Visitor ID Proof:</label>
+                        <select id="id_proof" name="id_proof">
+                            <option value="">Select ID Proof</option>
+                            <option value="Adhar Card">Adhar Card</option>
+                            <option value="Pan Card">Pan Card</option>
+                            <option value="Voter ID">Voter ID</option>
+                            <option value="Passport">Passport</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="id_proof_number">ID Proof Number:</label>
+                        <input type="text" id="id_proof_number" name="id_proof_number" required>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="gender">Gender:</label>
+                <select id="gender" name="gender">
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
                 </select>
             </div>
             <button type="submit">Submit</button>
         </form>
     </div>
     <script>
+        // Contact persons data based on departments
+        const contactPersons = {
+            "Marketing and Sales": ["Gaurav", "Vedan"],
+            "Finance": ["Harinath", "Pranjul"],
+            "Human Resources": ["Kavya", "Mehak"],
+            "IT": ["Yoginder Singh", "Ravinder"]
+        };
+
+        // Function to populate contact persons based on selected department
+        function populateContactPersons() {
+            const departmentSelect = document.getElementById('department');
+            const contactPersonSelect = document.getElementById('contact_person');
+            const selectedDepartment = departmentSelect.value;
+
+            // Clear existing options
+            contactPersonSelect.innerHTML = '';
+
+            // Add default option
+            const defaultOption = document.createElement('option');
+            defaultOption.text = 'Select Contact Person';
+            defaultOption.value = '';
+            contactPersonSelect.add(defaultOption);
+
+            // Populate options based on selected department
+            if (selectedDepartment && contactPersons[selectedDepartment]) {
+                const persons = contactPersons[selectedDepartment];
+                persons.forEach(person => {
+                    const option = document.createElement('option');
+                    option.text = person;
+                    option.value = person.toLowerCase().replace(/\s+/g, '_'); // Generating value based on name
+                    contactPersonSelect.add(option);
+                });
+            }
+        }
+
+        // Event listener for department selection change
+        document.getElementById('department').addEventListener('change', populateContactPersons);
+
+        // Initial population of contact persons based on default selection
+        populateContactPersons();
+
+        // Form submission handling
         document.getElementById('VisitorForm').addEventListener('submit', function(event) {
             event.preventDefault(); // Prevent the default form submission
-            
+
             // Serialize form data into JSON format
             const formData = {};
             const formElements = this.elements;
             for (let element of formElements) {
-                if (element.tagName === 'INPUT' || element.tagName === 'SELECT' || element.tagName === 'TEXTAREA') {
+                if (element.tagName === 'INPUT' || element.tagName === 'SELECT') {
                     formData[element.name] = element.value;
                 }
             }
@@ -143,7 +211,7 @@
             // Store form data in local storage for retrieval on the next page
             localStorage.setItem('visitorFormData', JSON.stringify(formData));
 
-            // Redirect to the capture image page
+            // Redirect to the next page (replace with your desired page)
             window.location.href = 'index2.html';
         });
     </script>
