@@ -54,7 +54,7 @@
         .logo {
             display: block;
             margin: 0 auto 20px;
-            max-width: 100px;
+            max-width: 210px;
         }
         .form-group {
             margin-bottom: 20px;
@@ -68,7 +68,7 @@
 </head>
 <body>
     <div class="container">
-        <img src="logo.svg" alt="Barista Logo" class="logo">
+        <img src="logo.svg" alt="Company Logo" class="logo">
         <h1>Capture Image</h1>
         <form id="ImageCaptureForm">
             <div class="form-group">
@@ -82,111 +82,114 @@
         </form>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const captureButton = document.getElementById('capture');
-        const imageDataInput = document.getElementById('imageData');
-        const ImageCaptureForm = document.getElementById('ImageCaptureForm');
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const captureButton = document.getElementById('capture');
+            const imageDataInput = document.getElementById('imageData');
+            const ImageCaptureForm = document.getElementById('ImageCaptureForm');
 
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then((stream) => {
-                video.srcObject = stream;
-            })
-            .catch((err) => {
-                console.error("Error accessing camera: ", err);
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then((stream) => {
+                    video.srcObject = stream;
+                })
+                .catch((err) => {
+                    console.error("Error accessing camera: ", err);
+                });
+
+            captureButton.addEventListener('click', () => {
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = canvas.toDataURL('image/png');
+                imageDataInput.value = imageData;
+                alert('Image captured successfully!');
             });
 
-        captureButton.addEventListener('click', () => {
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.toDataURL('image/png');
-            imageDataInput.value = imageData;
-            alert('Image captured successfully!');
-        });
+            ImageCaptureForm.addEventListener('submit', (event) => {
+                event.preventDefault();
 
-        ImageCaptureForm.addEventListener('submit', (event) => {
-            event.preventDefault();
+                if (!imageDataInput.value) {
+                    alert('Please capture a photo before submitting the form.');
+                    return;
+                }
 
-            if (!imageDataInput.value) {
-                alert('Please capture a photo before submitting the form.');
-                return;
-            }
+                // Retrieve form data from local storage
+                const formData = JSON.parse(localStorage.getItem('visitorFormData'));
 
-            // Retrieve form data from local storage
-            const formData = JSON.parse(localStorage.getItem('visitorFormData'));
+                const now = new Date();
+                const formDetails = {
+                    FullName: formData.full_name,
+                    EmailAddress: formData.email,
+                    PhoneNumber: formData.phone,
+                    Department: formData.options,
+                    PurposeOfVisit: formData.position,
+                    ContactPerson: formData.contact_person, // Corrected field name
+                    Date: now.toLocaleString(), // Adjusted to use one formatted date/time
+                    Gender: formData.gender,
+                    capturedImage: imageDataInput.value,
+                    SubmittedAt: now.toLocaleString()
+                };
 
-            const now = new Date();
-            const formDetails = {
-                FullName: formData.full_name,
-                EmailAddress: formData.email,
-                PhoneNumber: formData.phone,
-                Department: formData.options,
-                PurposeOfVisit: formData.position,
-                Date: formData.date,
-                Gender: formData.gender,
-                capturedImage: imageDataInput.value,
-                submittedAt: now.toLocaleString()
-            };
+                // Generate PDF using jsPDF library
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: [85, 54] // Standard ID card size
+                });
 
-            // Generate PDF using jsPDF library
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({
-                orientation: 'landscape',
-                unit: 'mm',
-                format: [85, 54] // Standard ID card size
+                // Set background color
+                doc.setFillColor(230, 230, 230);
+                doc.rect(0, 0, 85, 54, 'F');
+
+                doc.setDrawColor(255, 99, 0); // Orange color
+                doc.setLineWidth(0.5); // Border width
+                doc.rect(1, 1, 83, 52); 
+
+                // Add logo
+                doc.addImage('logo.png', 'PNG', 5, 3, 20, 10);
+
+                // Add the captured image to the PDF
+                const img = new Image();
+                img.src = formDetails.capturedImage;
+                img.onload = function() {
+                    doc.addImage(img, 'PNG', 5, 17, 20, 25);
+
+                    // Add title
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(19);
+                    doc.setTextColor(0, 0, 0);
+                    doc.text('VISITOR ID', 51, 10, { align: 'center' });
+
+                    // Add visitor details
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(7);
+                    doc.text(`Name: ${formDetails.FullName}`, 35, 20);
+                    doc.text(`Department: ${formDetails.Department}`, 35, 24);
+                    doc.text(`Purpose: ${formDetails.PurposeOfVisit}`, 35, 28);
+                    doc.text(`Contact Person: ${formDetails.ContactPerson}`, 35, 32);
+                    doc.text(`Date: ${formDetails.Date}`, 35, 36); // Adjusted to use single date display
+                    doc.text(`Phone: ${formDetails.PhoneNumber}`, 35, 40);
+
+                    // Add footer
+                    doc.setFontSize(5);
+                    doc.text('Note:- This ID must be worn visibly at all times', 42.5, 50, { align: 'center' });
+
+                    doc.save('Visitor_ID_Card.pdf');
+
+                    // Clean up local storage after submission
+                    localStorage.removeItem('visitorFormData');
+
+                    // Redirect to confirmation page
+                    window.location.href = 'confirmation.html';
+                };
             });
-
-            // Set background color
-            doc.setFillColor(230, 230, 230);
-            doc.rect(0, 0, 85, 54, 'F');
-
-            doc.setDrawColor(255, 255, 0); // Yellow color
-            doc.setLineWidth(0.5); // Border width
-            doc.rect(1, 1, 83, 52); 
-
-            // Add logo
-            doc.addImage('logo.png', 'PNG', 2, 2, 20, 10);
-
-            // Add title
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(16);
-            doc.setTextColor(0, 0, 0);
-            doc.text('VISITOR ID', 42.5, 10, { align: 'center' });
-
-            // Add the captured image to the PDF
-            const img = new Image();
-            img.src = formDetails.capturedImage;
-            img.onload = function() {
-                doc.addImage(img, 'PNG', 5, 15, 30, 30);
-
-                // Add visitor details
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(8);
-                doc.text(`Name: ${formDetails.FullName}`, 40, 20);
-                doc.text(`Dept: ${formDetails.Department}`, 40, 25);
-                doc.text(`Purpose: ${formDetails.PurposeOfVisit}`, 40, 30);
-                doc.text(`Date: ${formDetails.Date}`, 40, 35);
-                doc.text(`Phone: ${formDetails.PhoneNumber}`, 40, 40);
-
-                // Add footer
-                doc.setFontSize(6);
-                doc.text('This ID must be worn visibly at all times', 42.5, 50, { align: 'center' });
-
-                doc.save('Visitor_ID_Card.pdf');
-
-                // Clean up local storage after submission
-                localStorage.removeItem('visitorFormData');
-
-                // Redirect to confirmation page
-                window.location.href = 'confirmation.html';
-            };
         });
-    });
-</script>
+    </script>
 </body>
 </html>
+
 
