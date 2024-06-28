@@ -124,10 +124,10 @@
                     FullName: formData.full_name,
                     EmailAddress: formData.email,
                     PhoneNumber: formData.phone,
-                    Department: formData.options,
+                    Department: formData.department,
                     PurposeOfVisit: formData.position,
-                    ContactPerson: formData.contact_person, // Corrected field name
-                    Date: now.toLocaleString(), // Adjusted to use one formatted date/time
+                    ContactPerson: formData.contact_person,
+                    Date: now.toLocaleString(),
                     Gender: formData.gender,
                     capturedImage: imageDataInput.value,
                     SubmittedAt: now.toLocaleString()
@@ -171,14 +171,14 @@
                     doc.text(`Department: ${formDetails.Department}`, 35, 24);
                     doc.text(`Purpose: ${formDetails.PurposeOfVisit}`, 35, 28);
                     doc.text(`Contact Person: ${formDetails.ContactPerson}`, 35, 32);
-                    doc.text(`Date: ${formDetails.Date}`, 35, 36); // Adjusted to use single date display
+                    doc.text(`Date: ${formDetails.Date}`, 35, 36);
                     doc.text(`Phone: ${formDetails.PhoneNumber}`, 35, 40);
 
                     // Add footer
                     doc.setFontSize(5);
                     doc.text('Note:- This ID must be worn visibly at all times', 42.5, 50, { align: 'center' });
 
-                    doc.save('Visitor_ID_Card.pdf');
+                    doc.save(`Visitor_ID_Card_${formDetails.FullName}.pdf`);
 
                     // Clean up local storage after submission
                     localStorage.removeItem('visitorFormData');
@@ -191,5 +191,3 @@
     </script>
 </body>
 </html>
-
-
